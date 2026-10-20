@@ -5,6 +5,8 @@ import logging
 import sys
 import os
 
+from sqlalchemy.exc import IntegrityError
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,10 @@ def crear_estudiante(estudiante: EstudianteCreate):
         db.commit()
         db.refresh(estudiante_db)
         return estudiante_db
+    except IntegrityError:
+        db.rollback()
+        logger.warning(f"El email {estudiante.email} ya está registrado")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El email ya está registrado")
     finally:
         db.close()
 
